@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>pentododekagon - puzzle calculator</title>
+    <style>
+        body {
+            background-color: white;
+            font-family: sans-serif;
+        }
+
+        p {
+            margin: 0px;
+        }
+
+        button,
+        select {
+            font-family: sans-serif;
+            height: 22px;
+        }
+
+        canvas {
+            display: block;
+            background-color: #333333;
+            margin-left: 0px;
+        }
+
+        #options {
+            clear: both;
+            border: none;
+            margin: 0px;
+            float: left;
+        }
+
+        #controls {
+            border: none;
+            margin: 0px;
+            float: left;
+            padding: 33px 10px 10px 10px;
+        }
+
+        #preview-holder {
+            margin-top: 12px;
+            width: 160px;
+            height: 100px;
+            float: left;
+        }
+
+        .preview-block {
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border: none;
+            float: left;
+        }
+
+        a,
+        a:visited,
+        a:active,
+        a:hover {
+            color: #333333;
+        }
+
+        label {
+            padding-left: 0px;
+            width: 70px;
+            display: block;
+            text-align: left;
+            float: left;
+        }
+
+
+        #headline,
+        #subline {
+            text-align: center;
+            margin: 2px 0px;
+        }
+
+        #headline {
+            font-weight: bold;
+            font-style: italic;
+            font-size: 32px;
+        }
+
+        #subline {
+            font-weight: bold;
+            font-style: italic;
+            font-size: 16px;
+        }
+
+        #canvas-holder {
+            width: 364px;
+            float: left;
+        }
+
+        #stats {
+            padding: 10px 0px 10px 0px;
+            clear: both;
+        }
+
+        #solutions-holder {
+            height: 196px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        #button-holder {
+            width: 490px;
+            clear: both;
+            overflow: auto;
+            float: left;
+        }
+
+        #listofparts {
+            width: 490px;
+            clear: both;
+            overflow: auto;
+            float: left;
+        }
+
+        #listofrings {
+            width: 490px;
+            clear: both;
+            overflow: auto;
+            float: left;
+        }
+
+        #main-wrapper {
+            width: 700px;
+            overflow: auto;
+            margin: auto;
+        }
+
+        .clickable {
+            cursor: pointer;
+        }
+    </style>
+
+    <script>
+        "use strict";
+        var parts = {
+            rings: [
+                { name: "Ring 0", pattern: 0, coordinates: [0, 1], enabled: true },
+                { name: "Ring 1", pattern: 1, coordinates: [0, 2], enabled: true },
+                { name: "Ring 2", pattern: 2, coordinates: [0, 3], enabled: true },
+                { name: "Ring 3", pattern: 3, coordinates: [0, 4], enabled: false },
+                { name: "Ring 4", pattern: 4, coordinates: [0, 5], enabled: false },
+                { name: "Ring 5", pattern: 5, coordinates: [0, 6], enabled: false }
+            ],
+            pentos: [
+                { name: "I", pattern: 1, enabled: true, needsupport: false, rotated: false, coordinates: [1, 0, 1, 0, 2, 0, 3, 0, 4] },
+                { name: "I-r", pattern: 1, enabled: true, needsupport: false, rotated: false, coordinates: [1, 1, 0, 2, 0, 3, 0, 4, 0] },
+                { name: "X", pattern: 2, enabled: true, needsupport: true, rotated: false, coordinates: [2, 1, -1, 1, 0, 1, 1, 2, 0] },
+                { name: "Z-r", pattern: 3, enabled: true, needsupport: true, rotated: false, coordinates: [3, 0, 1, 1, 0, 2, -1, 2, 0] },
+                { name: "Z", pattern: 3, enabled: true, needsupport: true, rotated: false, coordinates: [3, 1, 0, 1, 1, 1, 2, 2, 2] },
+                { name: "Z-rm", pattern: 3, enabled: true, needsupport: true, rotated: false, coordinates: [3, 0, 1, 1, 1, 2, 1, 2, 2] },
+                { name: "Z-m", pattern: 3, enabled: true, needsupport: true, rotated: false, coordinates: [3, 1, -2, 1, -1, 1, 0, 2, -2] },
+                { name: "V-m", pattern: 4, enabled: true, needsupport: false, rotated: 0, coordinates: [4, 1, 0, 2, 0, 2, 1, 2, 2] },
+                { name: "V", pattern: 4, enabled: true, needsupport: false, rotated: 9, coordinates: [4, 0, 1, 0, 2, 1, 0, 2, 0] },
+                { name: "V", pattern: 4, enabled: true, needsupport: false, rotated: 0, coordinates: [4, 1, 0, 2, -2, 2, -1, 2, 0] },
+                { name: "V-m", pattern: 4, enabled: true, needsupport: false, rotated: 7, coordinates: [4, 0, 1, 0, 2, 1, 2, 2, 2] },
+                { name: "T", pattern: 5, enabled: true, needsupport: false, rotated: 13, coordinates: [5, 0, 1, 0, 2, 1, 1, 2, 1] },
+                { name: "T-r", pattern: 5, enabled: true, needsupport: true, rotated: 14, coordinates: [5, 1, -2, 1, -1, 1, 0, 2, 0] },
+                { name: "T", pattern: 5, enabled: true, needsupport: false, rotated: false, coordinates: [5, 1, 0, 2, -1, 2, 0, 2, 1] },
+                { name: "T-r", pattern: 5, enabled: true, needsupport: true, rotated: false, coordinates: [5, 1, 0, 1, 1, 1, 2, 2, 0] },
+                { name: "W", pattern: 6, enabled: true, needsupport: true, rotated: false, coordinates: [6, 1, 0, 1, 1, 2, 1, 2, 2] },
+                { name: "W-m", pattern: 6, enabled: true, needsupport: true, rotated: false, coordinates: [6, 1, -1, 1, 0, 2, -2, 2, -1] },
+                { name: "W", pattern: 6, enabled: true, needsupport: true, rotated: 15, coordinates: [6, 0, 1, 1, 1, 1, 2, 2, 2] },
+                { name: "W-m", pattern: 6, enabled: true, needsupport: true, rotated: 16, coordinates: [6, 0, 1, 1, -1, 1, 0, 2, -1] },
+                { name: "U", pattern: 7, enabled: true, needsupport: false, rotated: 21, coordinates: [7, 0, 1, 0, 2, 1, 0, 1, 2] },
+                { name: "U-r", pattern: 7, enabled: true, needsupport: true, rotated: false, coordinates: [7, 0, 1, 1, 1, 2, 0, 2, 1] },
+                { name: "U", pattern: 7, enabled: true, needsupport: false, rotated: false, coordinates: [7, 0, 2, 1, 0, 1, 1, 1, 2] },
+                { name: "U-r", pattern: 7, enabled: true, needsupport: true, rotated: 20, coordinates: [7, 0, 1, 1, 0, 2, 0, 2, 1] },
+                { name: "L", pattern: 8, enabled: true, needsupport: false, rotated: false, coordinates: [8, 1, 0, 1, 1, 1, 2, 1, 3] },
+                { name: "L-r", pattern: 8, enabled: true, needsupport: false, rotated: false, coordinates: [8, 1, 0, 2, 0, 3, -1, 3, 0] },
+                { name: "L", pattern: 8, enabled: true, needsupport: false, rotated: 23, coordinates: [8, 0, 1, 0, 2, 0, 3, 1, 3] },
+                { name: "L-r", pattern: 8, enabled: true, needsupport: false, rotated: 24, coordinates: [8, 0, 1, 1, 0, 2, 0, 3, 0] },
+                { name: "L-rm", pattern: 8, enabled: true, needsupport: false, rotated: 29, coordinates: [8, 0, 1, 1, 1, 2, 1, 3, 1] },
+                { name: "L-m", pattern: 8, enabled: true, needsupport: false, rotated: 30, coordinates: [8, 0, 1, 0, 2, 0, 3, 1, 0] },
+                { name: "L-rm", pattern: 8, enabled: true, needsupport: false, rotated: false, coordinates: [8, 1, 0, 2, 0, 3, 0, 3, 1] },
+                { name: "L-m", pattern: 8, enabled: true, needsupport: false, rotated: false, coordinates: [8, 1, -3, 1, -2, 1, -1, 1, 0] },
+                { name: "N", pattern: 9, enabled: true, needsupport: true, rotated: false, coordinates: [9, 0, 1, 1, -2, 1, -1, 1, 0] },
+                { name: "N-r", pattern: 9, enabled: true, needsupport: true, rotated: 34, coordinates: [9, 1, 0, 1, 1, 2, 1, 3, 1] },
+                { name: "N", pattern: 9, enabled: true, needsupport: true, rotated: 31, coordinates: [9, 0, 1, 0, 2, 1, -1, 1, 0] },
+                { name: "N-r", pattern: 9, enabled: true, needsupport: true, rotated: false, coordinates: [9, 1, 0, 2, 0, 2, 1, 3, 1] },
+                { name: "N-m", pattern: 9, enabled: true, needsupport: true, rotated: false, coordinates: [9, 0, 1, 1, 1, 1, 2, 1, 3] },
+                { name: "N-rm", pattern: 9, enabled: true, needsupport: true, rotated: false, coordinates: [9, 1, 0, 2, -1, 2, 0, 3, -1] },
+                { name: "N-m", pattern: 9, enabled: true, needsupport: true, rotated: 35, coordinates: [9, 0, 1, 0, 2, 1, 2, 1, 3] },
+                { name: "N-rm", pattern: 9, enabled: true, needsupport: true, rotated: 36, coordinates: [9, 1, -1, 1, 0, 2, -1, 3, -1] },
+                { name: "Y", pattern: 10, enabled: true, needsupport: false, rotated: false, coordinates: [10, 1, -2, 1, -1, 1, 0, 1, 1] },
+                { name: "Y-r", pattern: 10, enabled: true, needsupport: true, rotated: 42, coordinates: [10, 1, -1, 1, 0, 2, 0, 3, 0] },
+                { name: "Y", pattern: 10, enabled: true, needsupport: false, rotated: 39, coordinates: [10, 0, 1, 0, 2, 0, 3, 1, 1] },
+                { name: "Y-r", pattern: 10, enabled: true, needsupport: true, rotated: false, coordinates: [10, 1, 0, 2, 0, 2, 1, 3, 0] },
+                { name: "Y-m", pattern: 10, enabled: true, needsupport: false, rotated: 45, coordinates: [10, 0, 1, 0, 2, 0, 3, 1, 2] },
+                { name: "Y-rm", pattern: 10, enabled: true, needsupport: true, rotated: 46, coordinates: [10, 1, 0, 1, 1, 2, 0, 3, 0] },
+                { name: "Y-m", pattern: 10, enabled: true, needsupport: false, rotated: false, coordinates: [10, 1, -1, 1, 0, 1, 1, 1, 2] },
+                { name: "Y-rm", pattern: 10, enabled: true, needsupport: true, rotated: false, coordinates: [10, 1, 0, 2, -1, 2, 0, 3, 0] },
+                { name: "F", pattern: 11, enabled: true, needsupport: true, rotated: false, coordinates: [11, 1, -1, 1, 0, 1, 1, 2, 1] },
+                { name: "F-r", pattern: 11, enabled: true, needsupport: true, rotated: 50, coordinates: [11, 0, 1, 1, -1, 1, 0, 2, 0] },
+                { name: "F", pattern: 11, enabled: true, needsupport: true, rotated: 47, coordinates: [11, 1, 0, 1, 1, 1, 2, 2, 1] },
+                { name: "F-r", pattern: 11, enabled: true, needsupport: true, rotated: false, coordinates: [11, 1, 0, 1, 1, 2, -1, 2, 0] },
+                { name: "F-m", pattern: 11, enabled: true, needsupport: true, rotated: 53, coordinates: [11, 1, -2, 1, -1, 1, 0, 2, -1] },
+                { name: "F-rm", pattern: 11, enabled: true, needsupport: true, rotated: 54, coordinates: [11, 0, 1, 1, 1, 1, 2, 2, 1] },
+                { name: "F-m", pattern: 11, enabled: true, needsupport: true, rotated: false, coordinates: [11, 1, -1, 1, 0, 1, 1, 2, -1] },
+                { name: "F-rm", pattern: 11, enabled: true, needsupport: true, rotated: false, coordinates: [11, 1, -1, 1, 0, 2, 0, 2, 1] },
+                { name: "P-r", pattern: 12, enabled: true, needsupport: false, rotated: 57, coordinates: [12, 0, 1, 1, 0, 1, 1, 2, 1] },
+                { name: "P", pattern: 12, enabled: true, needsupport: false, rotated: 58, coordinates: [12, 0, 1, 0, 2, 1, 0, 1, 1] },
+                { name: "P-r", pattern: 12, enabled: true, needsupport: false, rotated: false, coordinates: [12, 1, 0, 1, 1, 2, 0, 2, 1] },
+                { name: "P", pattern: 12, enabled: true, needsupport: false, rotated: false, coordinates: [12, 0, 1, 1, -1, 1, 0, 1, 1] },
+                { name: "P-m", pattern: 12, enabled: true, needsupport: false, rotated: false, coordinates: [12, 0, 1, 1, 0, 1, 1, 1, 2] },
+                { name: "P-rm", pattern: 12, enabled: true, needsupport: false, rotated: false, coordinates: [12, 1, -1, 1, 0, 2, -1, 2, 0] },
+                { name: "P-m", pattern: 12, enabled: true, needsupport: false, rotated: 59, coordinates: [12, 0, 1, 0, 2, 1, 1, 1, 2] },
+                { name: "P-rm", pattern: 12, enabled: true, needsupport: false, rotated: 60, coordinates: [12, 0, 1, 1, 0, 1, 1, 2, 0] }
+            ]
+        }
+
+        var rows, cols;
+        var board;
+
+        var blockCheckData;
+        var blockCheckCt = 0;
+        var extraEmptySpaces;
+
+        var stack;
+        var frame;
+        var used;
+        var usedCt;
+
+        var piecesForSolution;
+        var moves;
+        var solutions;
+
+        var pieceColor = [
+            "black",
+            "#FF0000",
+            "#00FF00",
+            "#0000FF",
+            "#FF96FF",
+            "#00C800",
+            "#96FFFF",
+            "#969600",
+            "#0000C8",
+            "#FF9696",
+            "#C900C0",
+            "#FFFF96",
+            "#96FF96"
+        ];
+
+        var canvas;
+        var graphics;
+        var ticksBetweenMoves = -2;
+        var speedCounter = 0;
+        var squareSize, topOffset, leftOffset;
+        var blockedCt;
+        var spareSpaces;
+        var screenWithSolution = 0;
+        var screenWithoutSolution = 0;
+        var totalSolutions = 0;
+        var draw_while_running;
+
+        var INITIALIZING = 0,
+            RUNNING = 1,
+            RUNNING_TILL_SOLUTION = 2,
+            PAUSED = 3,
+            STEP = 4,
+            WAITING_FOR_SOLUTION = 6,
+            DONE = 7,
+            RESTART = 8;
+        var state = null;
+        var solving;
+        var running;
+        var foundSolutions = [];
+
+        var el_sRingsTarget;
+        var el_sRingsProzessed;
+        var el_sPentominos;
+        var el_sRotatedPentominos;
+        var el_sScreenWithSolution;
+        var el_sScreenWithoutSolution;
+        var el_sTotalSolution;
+        var el_bottommessage;
+        var el_shelf;
+        var foundSolution = { rings: [], pentos: [] };
+        var playedRings = [];
+        var possibleCombis = 0;
+        var manually = false;
+
+        function solutionStart() {
+            stack = [];
+            used = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            usedCt = 0;
+            moves = 0;
+            solutions = 0;
+            var row = 0, col = 0;
+            while (board[row][col] == 0) {
+                col++;
+                if (col > cols) {
+                    col = 0;
+                    row++;
+                }
+            }
+            frame = [row, col, -1];
+        }
+
+        function solutionStep() {
+            var changed = false;
+            if (frame[2] == parts.pentos.length) {
+                board[frame[0]][frame[1]] = -1;
+                extraEmptySpaces++;
+            }
+            else {
+                if (frame[2] >= 0) {
+                    removePiece(parts.pentos[frame[2]].coordinates, frame[0], frame[1], draw_while_running);
+                    used[parts.pentos[frame[2]].coordinates[0]] = 0;
+                    usedCt--;
+                    changed = true;
+                }
+                frame[2]++;
+                while (frame[2] < parts.pentos.length) {
+                    if (parts.pentos[frame[2]].enabled && !used[parts.pentos[frame[2]].coordinates[0]] && canPlay(parts.pentos[frame[2]].coordinates, frame[0], frame[1])) {
+                        playPiece(parts.pentos[frame[2]].coordinates, frame[0], frame[1], draw_while_running);
+                        moves++;
+                        used[parts.pentos[frame[2]].coordinates[0]] = 1;
+                        usedCt++;
+                        changed = true;
+                        stack.push(frame);
+                        if (usedCt == piecesForSolution) {
+                            return changed;
+                        }
+                        var row = frame[0];
+                        var col = frame[1];
+                        while (row < rows && board[row][col] != -1) {
+                            col++;
+                            if (col == cols) {
+                                col = 0;
+                                row++;
+                            }
+                        }
+                        frame = [row, col, -1];
+                        return changed;
+                    }
+                    frame[2]++;
+                }
+            }
+            if (stack.length == 0) {
+                return changed;
+            }
+            frame = stack.pop();
+            return changed;
+        }
+
+        function step() {
+            if (!solving) {
+                return;
+            }
+            if (state == RUNNING) {
+                speedCounter++;
+                if (speedCounter < ticksBetweenMoves) {
+                    requestAnimationFrame(step);
+                    return;
+                }
+                speedCounter = 0;
+            }
+            var repeats = (state == RUNNING_TILL_SOLUTION || state == WAITING_FOR_SOLUTION) ? 1000 : 1;
+            for (var i = 0; i < repeats; i++) {
+                do {
+                    var changed = solutionStep();
+                    if (stack.length == 0 && frame[2] == parts.pentos.length) {
+                        if (state == WAITING_FOR_SOLUTION) {
+                            setState(DONE);
+                            return;
+                        }
+                        else {
+                            setState(DONE);
+                            return;
+                        }
+                    }
+                    if (usedCt == piecesForSolution) {
+                        totalSolutions++ ,
+                            el_sTotalSolution.innerHTML = totalSolutions;
+                        solutions++;
+                        logSolution();
+                        if (state == WAITING_FOR_SOLUTION) {
+                            el_bottommessage.innerHTML =
+                                solutions + " solutions found so far; " + moves + " moves.";
+                            drawBoard();
+                            i = repeats;
+                            break;
+                        }
+                        else {
+                            setState(PAUSED);
+                            return;
+                        }
+                    }
+                } while (!changed);
+            }
+            if (state == STEP) {
+                setState(PAUSED);
+            }
+            else if (running) {
+                requestAnimationFrame(step);
+            }
+        }
+        function logSolution() {
+            var result = totalSolutions + ": ";
+            for (var i = 0; i < stack.length; i++) {
+                result += parts.pentos[stack[i][2]].name + ","
+            }
+            foundSolution.rings.forEach(ring => {
+                result += ring.pattern + ","
+            })
+
+            var e = document.createElement("div");
+            e.dataset.id = totalSolutions - 1;
+            e.setAttribute("class", "clickable");
+            e.onclick = function () {
+                showSolution(this.dataset.id)
+            };
+            e.appendChild(document.createTextNode(result));
+            el_shelf.insertBefore(e, el_shelf.firstChild);
+            foundSolutions[totalSolutions - 1] = JSON.parse(JSON.stringify(board.slice(0)));
+        }
+
+        function canPlay(pieceData, row, col) {
+            if (row >= rows || board[row][col] != -1) {
+                return false;
+            }
+            for (var i = 1; i < pieceData.length; i += 2) {
+                var r = row + pieceData[i];
+                var c = (col + pieceData[i + 1] + 12) % cols;
+                if (r < 0 || r >= rows || board[r][c] != -1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function playPiece(pieceData, row, col, drawNow) {
+            var p = pieceData[0];
+            board[row][col] = p;
+            for (var i = 1; i < pieceData.length; i += 2) {
+                var r = row + pieceData[i];
+                var c = (col + pieceData[i + 1] + 12) % cols;
+                board[r][c] = p;
+            }
+            if (drawNow) {
+                graphics.fillStyle = pieceColor[pieceData[0]];
+                graphics.fillRect(leftOffset + col * squareSize + 1,
+                    topOffset + row * squareSize + 1, squareSize - 2, squareSize - 2);
+                for (i = 1; i < pieceData.length; i += 2) {
+                    r = row + pieceData[i];
+                    c = (col + pieceData[i + 1] + 12) % cols;
+                    if (c >= cols) c = c - cols;
+                    graphics.fillRect(leftOffset + c * squareSize + 1,
+                        topOffset + r * squareSize + 1, squareSize - 2, squareSize - 2);
+                }
+            }
+        }
+
+        function removePiece(pieceData, row, col, drawNow) {
+            board[row][col] = -1;
+            for (var i = 1; i < pieceData.length; i += 2) {
+                var r = row + pieceData[i];
+                var c = (col + pieceData[i + 1] + 12) % cols;
+                board[r][c] = -1;
+            }
+            if (drawNow) {
+                graphics.fillStyle = "white";
+                graphics.fillRect(leftOffset + col * squareSize + 1,
+                    topOffset + row * squareSize + 1, squareSize - 2, squareSize - 2);
+                for (i = 1; i < pieceData.length; i += 2) {
+                    r = row + pieceData[i];
+                    c = (col + pieceData[i + 1] + 12) % cols;
+                    if (c >= cols) c = c - cols;
+
+                    graphics.fillRect(leftOffset + c * squareSize + 1,
+                        topOffset + r * squareSize + 1, squareSize - 2, squareSize - 2);
+                }
+            }
+        }
+
+        function placeRings() {
+            if (parts.rings.filter(ring => ring.enabled === true).length < rows) return false;
+
+            foundSolution = { rings: [], pentos: [] };
+            if (blockedCt == 0) {
+                manually = false;
+                do {
+                    do {
+                        foundSolution = { rings: [], pentos: [] };
+                        for (var i = 0; i < rows; i++) {
+                            do {
+                                var ringNo = Math.floor(Math.random() * 6 + 0);
+                            }
+                            while (!parts.rings[ringNo].enabled || foundSolution.rings.find(ring => ring.pattern === parts.rings[ringNo].pattern))
+                            foundSolution.rings[i] = {};
+                            foundSolution.rings[i].pattern = parts.rings[ringNo].pattern;
+                        }
+                    } while (foundSolution.rings[0].pattern > foundSolution.rings[rows - 1].pattern)
+                    var thisCombi = "";
+                    for (var i = 0; i < rows; i++) {
+                        var offset = 11;
+                        thisCombi += foundSolution.rings[i].pattern
+                        if (i != 0) offset = Math.floor(Math.random() * 12 + 0);
+                        thisCombi += (offset.toString(12));
+                        var thisRing = parts.rings.find(ring => ring.pattern == foundSolution.rings[i].pattern);
+                        foundSolution.rings[i].coordinates = [i, offset]
+                    }
+                } while (playedRings.indexOf(thisCombi) != -1 && playedRings.length < possibleCombis)
+                if (playedRings.length >= possibleCombis) {
+                    return false;
+                }
+                playedRings.push(thisCombi)
+                el_sRingsProzessed.innerHTML = playedRings.length;
+                for (var i = 0; i < rows; i++) {
+                    var thisRing = parts.rings.find(ring => ring.pattern == foundSolution.rings[i].pattern);
+                    var offset = foundSolution.rings[i].coordinates[1]
+                    playRing((offset - thisRing.coordinates[0] + 12) % 12, (offset - thisRing.coordinates[1] + 12) % 12, i);
+                }
+            } else {
+                manually = true;
+            }
+            return true;
+        }
+
+        function playRing(col1, col2, row) {
+            blockedCt += 2;
+            board[row][col1] = 0;
+            board[row][col2] = 0;
+            var squares = rows * cols - blockedCt;
+            piecesForSolution = Math.floor(squares / 5);
+        }
+
+        function setState(newState) {
+            var oldState = state;
+            state = newState;
+            if (newState == DONE || newState == INITIALIZING) {
+                solving = false;
+            }
+            else if (oldState == INITIALIZING) {
+                if (!placeRings()) {
+                    state = oldState;
+                }
+                solving = true;
+                solutionStart();
+            }
+            switch (state) {
+                case INITIALIZING:
+                    el_bottommessage.innerHTML = "&nbsp;";
+                    var message;
+                    if (spareSpaces == 0)
+                        message = "click 'run' or 'step' to start solving.";
+                    else if (blockedCt == spareSpaces)
+                        message = "click 'run' or 'step' to start solving (or click a black square).";
+                    else if (blockedCt == 0)
+                        message = "leave empty or click 2 squares per ring";
+                    else
+                        message = "click up to " + (spareSpaces - blockedCt) + " more squares.";
+                    document.getElementById("message").innerHTML = message;
+                    break;
+                case RUNNING:
+                    document.getElementById("message").innerHTML = "running...";
+                    el_bottommessage.innerHTML = solutions + " solutions found so far.";
+                    drawBoard();
+                    break;
+                case RUNNING_TILL_SOLUTION:
+                    document.getElementById("message").innerHTML = "looking for solution...";
+                    el_bottommessage.innerHTML = solutions + " solutions found so far.";
+                    break;
+                case WAITING_FOR_SOLUTION:
+                    document.getElementById("message").innerHTML = "looking for all solutions...";
+                    el_bottommessage.innerHTML = solutions + " solutions found so far.";
+                    break;
+                case PAUSED:
+                    document.getElementById("message").innerHTML = "click 'run' or 'step' to continue...";
+                    el_bottommessage.innerHTML = solutions + " solutions found so far; " + moves + " moves.";
+                    if (oldState == RUNNING_TILL_SOLUTION) {
+                        drawBoard();
+                    }
+                    break;
+                case DONE:
+                    solving = false;
+                    if (solutions == 0) {
+                        ++screenWithoutSolution;
+                    } else {
+                        ++screenWithSolution;
+                    }
+                    document.getElementById("message").innerHTML =
+                        "all possibilities checked. click 'reset' to continue.";
+                    el_bottommessage.innerHTML = "&nbsp;";
+                    if (oldState == WAITING_FOR_SOLUTION || oldState == RUNNING_TILL_SOLUTION || oldState == RUNNING) {
+                        if (!manually) {
+                            doClear();
+                            doRun();
+                        }
+                    }
+                    break;
+            }
+            document.getElementById("reset").style.display =
+                (state != INITIALIZING && blockedCt > 0) ? "inline" : "none";
+            document.getElementById("height").disabled = state != INITIALIZING;
+            document.getElementById("run").disabled =
+                state != INITIALIZING && state != PAUSED;
+            document.getElementById("pause").disabled =
+                state == PAUSED || state == INITIALIZING || state == DONE;
+            document.getElementById("step").disabled =
+                state != INITIALIZING && state != PAUSED;
+
+            [].forEach.call(document.getElementsByClassName("checkbox"), function (e) { e.disabled = state != INITIALIZING; });
+            [].forEach.call(document.getElementsByClassName("pcheckbox"), function (e) { e.disabled = state != INITIALIZING; });
+
+            draw_while_running = state != RUNNING_TILL_SOLUTION && state != WAITING_FOR_SOLUTION;
+            if (state == STEP) {
+                running = false;
+                step();
+            }
+            else {
+                var newrunning = state == RUNNING || state == RUNNING_TILL_SOLUTION || state == WAITING_FOR_SOLUTION;
+                if (newrunning != running) {
+                    running = newrunning;
+                    if (running) {
+                        step();
+                    }
+                }
+            }
+        }
+
+        function showSolution(id) {
+            var pattern = foundSolutions[id];
+            graphics.fillStyle = "#333333";
+            graphics.fillRect(0, 0, canvas.width, canvas.height);
+            var r, c;
+            for (r = 0; r < rows; r++) {
+                for (c = 0; c < cols; c++) {
+                    if (pattern[r][c] < 0) {
+                        graphics.fillStyle = "white";
+                    }
+                    else {
+                        var piece = pattern[r][c];
+                        graphics.fillStyle = pieceColor[piece];
+                    }
+                    graphics.fillRect(leftOffset + c * squareSize + 1,
+                        topOffset + r * squareSize + 1, squareSize - 2, squareSize - 2);
+                }
+            }
+        }
+        function drawBoard() {
+            graphics.fillStyle = "#333333";
+            graphics.fillRect(0, 0, canvas.width, canvas.height);
+            var r, c;
+            for (r = 0; r < rows; r++) {
+                for (c = 0; c < cols; c++) {
+                    if (board[r][c] < 0) {
+                        graphics.fillStyle = "white";
+                    }
+                    else {
+                        var piece = board[r][c];
+                        graphics.fillStyle = pieceColor[piece];
+                    }
+                    graphics.fillRect(leftOffset + c * squareSize + 1,
+                        topOffset + r * squareSize + 1, squareSize - 2, squareSize - 2);
+                }
+            }
+        }
+
+        function setBoardSize(r, c) {
+            rows = r;
+            cols = c;
+            var squares = rows * cols;
+            if (squares >= 72) {
+                piecesForSolution = 12;
+                spareSpaces = squares - 72;
+            }
+            else {
+                piecesForSolution = Math.floor(squares / 5);
+                spareSpaces = squares - 5 * piecesForSolution;
+            }
+            squareSize = 30;
+
+            var width = squareSize * cols + 4;
+            var height = squareSize * rows + 4;
+            canvas.width = width;
+            canvas.height = height;
+            leftOffset = Math.floor((canvas.width - cols * squareSize) / 2);
+            topOffset = Math.floor((canvas.height - rows * squareSize) / 2);
+            doClear();
+            drawBoard();
+        }
+
+        function mouse2row(y) {
+            var row = Math.floor((y - topOffset) / squareSize);
+            return (row < 0 || row >= rows) ? -1 : row;
+        }
+
+        function mouse2col(x) {
+            var col = Math.floor((x - leftOffset) / squareSize);
+            return (col < 0 || col >= cols) ? -1 : col;
+        }
+
+        function doMouseDown(evt) {
+            if (state == DONE) {
+                doReset();
+            }
+            if (state != INITIALIZING) {
+                return;
+            }
+            var r = canvas.getBoundingClientRect();
+            var x = Math.round(evt.clientX - r.left);
+            var y = Math.round(evt.clientY - r.top);
+            handleClick(mouse2col(x), mouse2row(y));
+        }
+
+        function handleClick(col, row) {
+            if (row < 0 || col < 0 || row >= rows || col >= cols) {
+                return;
+            }
+            var val = board[row][col];
+            var newval;
+            if (val == -1) {
+                var temp = 0;
+                for (var i = 0; i < cols; i++) {
+                    if (board[row][i] == 0) temp++;
+                }
+                if (temp > 1) return;
+                newval = 0;
+                blockedCt++;
+            }
+            else {
+                newval = -1;
+                blockedCt--;
+            }
+            board[row][col] = newval;
+            drawBoard();
+            if (blockedCt == rows * 2) {
+                document.getElementById("message").innerHTML =
+                    "click 'run' or 'step' to start solving.";
+            }
+            else {
+                document.getElementById("message").innerHTML = "click up to " +
+                    (rows * 2 - blockedCt) + " more squares.";
+            }
+            var squares = rows * cols - blockedCt;
+            piecesForSolution = Math.floor(squares / 5);
+        }
+
+        function filterParts() {
+            if (state != INITIALIZING) {
+                return;
+            }
+
+            parts.rings.forEach(e => {
+                e.enabled = true;
+            });
+
+            parts.pentos.forEach(e => {
+                e.enabled = false;
+            });
+
+            document.getElementsByName("ring").forEach(e => {
+                parts.rings.find(ring => ring.pattern == e.value).enabled = e.checked;
+            }
+            )
+
+            var i = 0;
+            parts.pentos.forEach(pento => {
+                if (pento.rotated) {
+                    pento.enabled = document.getElementById("pento" + pento.rotated).checked;
+                } else {
+                    pento.enabled = document.getElementById("pento" + i).checked;
+                }
+                i++
+            });
+
+            var result = 1;
+            var ringsEnabled = parts.rings.filter(ring => ring.enabled).length;
+            for (var i = 1; i <= ringsEnabled; i++) {
+                result = i * result;
+            }
+
+            var reduce = 1;
+            var spare = ringsEnabled - rows
+            for (var i = 1; i <= spare; i++) {
+                reduce = i * reduce;
+            }
+
+            possibleCombis = (Math.pow(12, rows - 1) * ((result / reduce) / 2));
+            el_sRingsTarget.innerHTML = possibleCombis;
+            updateStats();
+        }
+
+        function updateStats() {
+            el_sRingsProzessed.innerHTML = playedRings.length;
+            el_sPentominos.innerHTML = parts.pentos.filter(pentos => (pentos.enabled && !pentos.rotated)).length;
+            el_sRotatedPentominos.innerHTML = parts.pentos.filter(pentos => (pentos.enabled)).length;
+            el_sScreenWithSolution.innerHTML = screenWithSolution;
+            el_sScreenWithoutSolution.innerHTML = screenWithoutSolution;
+            el_sTotalSolution.innerHTML = totalSolutions;
+        }
+
+        function drawPreview(e) {
+            [].forEach.call(document.getElementsByClassName("preview-block"), function (e) {
+                e.setAttribute("style", "background-color:white")
+            });
+            document.getElementById("pr03").setAttribute("style", "background-color:" + pieceColor[parts.pentos[e.target.dataset.id].pattern]);
+            for (var i = 1; i < parts.pentos[e.target.dataset.id].coordinates.length; i += 2) {
+                var r = parts.pentos[e.target.dataset.id].coordinates[i];
+                var c = 3 + parts.pentos[e.target.dataset.id].coordinates[i + 1];
+                document.getElementById("pr" + r + "" + c).setAttribute("style", "background-color:" + pieceColor[parts.pentos[e.target.dataset.id].pattern]);
+            }
+        }
+
+
+        function enablewithoutsupport() {
+            parts.pentos.filter(pento => pento.needsupport === false).forEach(element => {
+                if (document.getElementById("pento" + parts.pentos.indexOf(element)))
+                    document.getElementById("pento" + parts.pentos.indexOf(element)).checked = true;
+            });
+            filterParts();
+
+        }
+
+        function enablewithsupport() {
+            parts.pentos.filter(pento => pento.needsupport === true).forEach(element => {
+                if (document.getElementById("pento" + parts.pentos.indexOf(element)))
+                    document.getElementById("pento" + parts.pentos.indexOf(element)).checked = true;
+            });
+            filterParts();
+        }
+
+        function enableall() {
+            parts.pentos.forEach(element => {
+                if (document.getElementById("pento" + parts.pentos.indexOf(element)))
+                    document.getElementById("pento" + parts.pentos.indexOf(element)).checked = true;
+            });
+            filterParts();
+        }
+
+        function disableall() {
+            parts.pentos.forEach(element => {
+                if (document.getElementById("pento" + parts.pentos.indexOf(element)))
+                    document.getElementById("pento" + parts.pentos.indexOf(element)).checked = false;
+            });
+            filterParts();
+        }
+
+        function enablebasic() {
+            var basics = ["I", "Y", "L-m", "N", "U", "P", "W-m", "F-m", "T", "Z-r"];
+            basics.forEach(name => {
+                parts.pentos.filter(pento => pento.name === name).forEach(element => {
+                    if (document.getElementById("pento" + parts.pentos.indexOf(element)))
+                        document.getElementById("pento" + parts.pentos.indexOf(element)).checked = true;
+                });
+
+            })
+            filterParts();
+        }
+
+        function disablebasic() {
+            parts.pentos.forEach(element => {
+                if (document.getElementById("pento" + parts.pentos.indexOf(element)))
+                    document.getElementById("pento" + parts.pentos.indexOf(element)).checked = false;
+            });
+            filterParts();
+        }
+
+        function doSpeedChange() {
+            var ticks = Number(document.getElementById("speed").value);
+            var inProgress = running;;
+            if (ticks > 0) {
+                ticksBetweenMoves = ticks;
+                if (inProgress && state != RUNNING) {
+                    setState(RUNNING);
+                }
+            }
+            else if (inProgress) {
+                if (ticks == -1) {
+                    if (state != RUNNING_TILL_SOLUTION)
+                        setState(RUNNING_TILL_SOLUTION);
+                }
+                else {
+                    if (state != WAITING_FOR_SOLUTION)
+                        setState(WAITING_FOR_SOLUTION);
+                }
+            }
+        }
+
+        function doHeightChange() {
+            if (state != INITIALIZING) {
+                return;
+            }
+            var r = Number(document.getElementById("height").value);
+            if (rows == r) {
+                return;
+            }
+            setBoardSize(r, cols);
+            while (parts.rings.filter(ring => ring.enabled === true).length < r) {
+                var x = Array.from(document.getElementsByName("ring"));
+                x.filter(e => e.checked === false)[0].checked = true;
+                filterParts();
+            }
+        }
+
+        function doClear() {
+            board = new Array(rows);
+            for (var i = 0; i < rows; i++) {
+                board[i] = new Array(cols);
+                for (var j = 0; j < cols; j++) {
+                    board[i][j] = -1;
+                }
+            }
+            blockedCt = 0;
+            setState(INITIALIZING);
+        }
+
+        function doClearAndReset() {
+            playedRings = [];
+            screenWithSolution = 0;
+            screenWithoutSolution = 0;
+            totalSolutions = 0;
+            doClear();
+            drawBoard();
+            filterParts();
+            el_shelf.innerHTML = "";
+        }
+
+
+        function doReset() {
+            for (var i = 0; i < rows; i++) {
+                for (var j = 0; j < cols; j++) {
+                    if (board[i][j] != 0) {
+                        board[i][j] = -1;
+                    }
+                }
+            }
+            drawBoard();
+            setState(INITIALIZING);
+        }
+
+        function doRun() {
+            filterParts();
+            var ticks = Number(document.getElementById("speed").value);
+            if (ticks == -1) {
+                setState(RUNNING_TILL_SOLUTION);
+            }
+            else if (ticks == -2) {
+                setState(WAITING_FOR_SOLUTION);
+            }
+            else {
+                setState(RUNNING);
+            }
+        }
+
+        function doPause() {
+            setState(PAUSED);
+        }
+
+        function doStep() {
+            setState(STEP);
+        }
+
+        function init() {
+
+            el_sRingsTarget = document.getElementById("sRingsTarget");
+            el_sRingsProzessed = document.getElementById("sRingsProzessed");
+            el_sPentominos = document.getElementById("sPentominos");
+            el_sRotatedPentominos = document.getElementById("sRotatedPentominos");
+            el_sScreenWithSolution = document.getElementById("sScreenWithSolution");
+            el_sScreenWithoutSolution = document.getElementById("sScreenWithoutSolution");
+            el_sTotalSolution = document.getElementById("sTotalSolution");
+            el_bottommessage = document.getElementById("bottommessage");
+            el_shelf = document.getElementById("solutions-holder");
+
+            try {
+                canvas = document.getElementById("canvas");
+                graphics = canvas.getContext("2d");
+                if (!graphics) {
+                    throw "error";
+                }
+            }
+            catch (e) {
+                document.getElementById("error").innerHTML =
+                    "<hr><h3>Sorry, can't get graphics context, which is required to use this page.<h3><hr>";
+                return;
+            }
+
+            var listofparts = document.getElementById("listofparts")
+            for (var i = 0; i < parts.pentos.length; i++) {
+                if (parts.pentos[i].rotated) continue;
+                var l = document.createElement("label");
+                l.setAttribute("class", "label");
+                l.setAttribute("data-id", i);
+
+                var e = document.createElement("input");
+                e.setAttribute("type", "checkbox")
+                e.setAttribute("class", "pcheckbox")
+                e.setAttribute("name", "pento")
+                e.setAttribute("id", "pento" + i)
+                e.setAttribute("data-id", i)
+                e.setAttribute("checked", "true")
+                l.appendChild(e)
+
+                l.appendChild(document.createTextNode(parts.pentos[i].name));
+                listofparts.appendChild(l)
+            }
+            var preview = document.getElementById("preview-holder")
+            for (var i = 0; i < 40; i++) {
+                var e = document.createElement("div");
+                e.setAttribute("class", "preview-block")
+                e.setAttribute("id", "pr" + Math.floor(i / 8) + "" + i % 8)
+                preview.appendChild(e)
+            }
+
+            canvas.addEventListener("mousedown", doMouseDown, false);
+            document.getElementById("speed").value = "" + ticksBetweenMoves;
+            document.getElementById("speed").onchange = doSpeedChange;
+            document.getElementById("height").value = "3";
+            document.getElementById("height").onchange = doHeightChange;
+            document.getElementById("clear").onclick = doClearAndReset;
+            document.getElementById("reset").onclick = doReset;
+            document.getElementById("run").onclick = doRun;
+            document.getElementById("pause").onclick = doPause;
+            document.getElementById("step").onclick = doStep;
+            [].forEach.call(document.getElementsByClassName("checkbox"), function (e) {
+                e.onchange = filterParts;
+            });
+            [].forEach.call(document.getElementsByClassName("pcheckbox"), function (e) {
+                e.onchange = filterParts;
+                e.onmouseover = drawPreview;
+            });
+            [].forEach.call(document.getElementsByClassName("label"), function (e) {
+                e.onmouseover = drawPreview;
+            });
+            document.getElementById("enablewithoutsupport").onclick = enablewithoutsupport;
+            document.getElementById("enablewithsupport").onclick = enablewithsupport;
+            document.getElementById("disableall").onclick = disableall;
+            document.getElementById("enableall").onclick = enableall;
+            // document.getElementById("disablebasic").onclick = disablebasic;
+            // document.getElementById( "enablebasic").onclick = enablebasic;
+
+            setBoardSize(3, 12);
+            disableall();
+            enablewithoutsupport();
+            filterParts();
+        }
+
+    </script>
+</head>
+
+<body onload="init()">
+
+    <div id="headline">pentododekagon</div>
+    <div id="subline">puzzle calculator</div>
+    <div id="error">
+        <noscript>
+            <hr>
+            <h3>this page defentliy requires javascript.</h3>
+        </noscript>
+    </div>
+    <div id="main-wrapper">
+        <div id="canvas-holder">
+            <div id="message">&nbsp;</div>
+            <canvas width="404" height="404" id="canvas"></canvas>
+            <div id="bottommessage">&nbsp;</div>
+        </div>
+        <div id="controls">
+            <p>
+                <button id="clear" title="clear the board and restart.">clear and reset</button>
+                <button id="reset" style="display:none" title="remove parts but not rings and restart.">reset</button>
+            </p>
+            <div>
+                <button id="run">run</button>
+                <button id="pause">pause</button>
+                <button id="step">step</button>
+            </div>
+            <div>
+                <select id="speed">
+                    <option value="-2">all solutions</option>
+                    <option value="-1">next solution</option>
+                    <option value="1">animate (fast)</option>
+                    <option value="4">animate (slow)</option>
+                </select>
+            </div>
+        </div>
+        <div id="options">
+            <div>puzzle height:
+                <select id="height">
+                    <option value="6">6 rings</option>
+                    <option value="5">5 rings</option>
+                    <option value="4">4 rings</option>
+                    <option value="3">3 rings</option>
+                    <option value="2">2 rings</option>
+                </select>
+            </div>
+            <div id="listofrings">
+                rings:
+                <br />
+                <label>
+                    <input type="checkbox" class="checkbox" name="ring" id="ring0" value=0 checked>0</label>
+                <label>
+                    <input type="checkbox" class="checkbox" name="ring" id="ring1" value=1 checked>1</label>
+                <label>
+                    <input type="checkbox" class="checkbox" name="ring" id="ring2" value=2 checked>2</label>
+                <label>
+                    <input type="checkbox" class="checkbox" name="ring" id="ring3" value=3>3</label>
+                <label>
+                    <input type="checkbox" class="checkbox" name="ring" id="ring4" value=4>4</label>
+                <label>
+                    <input type="checkbox" class="checkbox" name="ring" id="ring5" value=5>5</label>
+            </div>
+            <div id="button-holder">
+                parts:
+                <br />
+                <button type="checkbox" class="checkbox" name="disableall" id="disableall">disable all</button>
+                <button type="checkbox" class="checkbox" name="enableall" id="enableall">enable all</button>
+                <button type="checkbox" class="checkbox" name="enablewithoutsupport" id="enablewithoutsupport">without support</button>
+                <button type="checkbox" class="checkbox" name="enablewithsupport" id="enablewithsupport">with support</button>
+                <!--        
+            <button type="checkbox" class="checkbox" name= "enablebasic"  id="enablebasic">basic</button>
+            <button type="checkbox" class="checkbox" name="disablebasic" id="disablebasic">complex</button>
+!-->
+            </div>
+            <div id="listofparts">
+            </div>
+            <div id="preview-holder"></div>
+        </div>
+        <div id="stats">
+            <div id="s01">unique ring combinations (target / prozessed):
+                <span id="sRingsTarget"></span> /
+                <span id="sRingsProzessed"></span>
+            </div>
+            <div id="s02">enabled Parts (parts / rotated / patterns):
+                <span id="sPentominos"></span> /
+                <span id="sRotatedPentominos"></span>
+            </div>
+            <div id="s03">solutions (screen with / screen without / total) :
+                <span id="sScreenWithSolution"></span> /
+                <span id="sScreenWithoutSolution"></span> /
+                <span id="sTotalSolution"></span>
+            </div>
+            <div id="s04">moves ( / ) :
+                <span id=""></span> /
+                <span id=""></span>
+            </div>
+        </div>
+        <div id="solutions-holder">
+        </div>
+    </div>
+</body>
+
+</html>
